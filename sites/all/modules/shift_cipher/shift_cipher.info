@@ -1,0 +1,5 @@
+name = ShiftCipher
+description = it shifts letters to make a cipher
+package = Code Review Modules
+core = 7.x
+files[] = shift_cipher.module

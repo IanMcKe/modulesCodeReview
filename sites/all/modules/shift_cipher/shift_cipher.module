@@ -1,0 +1,94 @@
+<?php
+
+function shift_cipher_menu()
+{
+    $items = [];
+    $items['groceries'] = [
+        'title' => 'Shift Cipher',
+        'type' => MENU_NORMAL_ITEM,
+        'access callback' => TRUE,
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('shift_cipher_form'),
+    ];
+
+    $items['shift_cipher_display'] = [
+        'title' => 'Shift Cipher Display',
+        'type' => MENU_CALLBACK,
+        'access callback' => TRUE,
+        'page callback' => 'shift_cipher_display'
+    ];
+
+    return $items;
+}
+
+function shift_cipher_form()
+{
+    $form = [];
+    $form['shift_value'] = [
+        '#title' => 'Value',
+        '#type' => 'textfield',
+        '#description' => t('Please enter the amount you would like to shift your letters by'),
+        '#element_validate' => array('element_validate_integer_positive'),
+        '#required' => TRUE
+    ];
+
+    $form['shift_direction'] = [
+        '#title' => 'Direction',
+        '#type' => 'textfield',
+        '#description' => t('Please enter "left" or "right"'),
+        '#element_validate' => array('element_validate_word'),
+        '#required' => TRUE
+    ];
+
+    $form['shift_phrase'] = [
+        '#title' => 'Phrase',
+        '#type' => 'textfield',
+        '#description' => t('Please enter the phrase you would like to be entered into the cipher'),
+        '#required' => TRUE
+    ];
+
+    $form['submit'] = [
+        '#type' => 'submit',
+        '#value' => 'Submit'
+    ];
+
+    return $form;
+}
+
+function element_validate_word($element)
+{
+    if($element['#value'] != "left" && $element['#value'] != "right") {
+        form_error($element, t('Please enter "left" or "right"'));
+    }
+}
+
+function shift_cipher_form_submit($form, &$form_state)
+{
+    $_SESSION['shift_cipher'] = [];
+    $value = intval($form_state['values']['shift_value']);
+    $direction = strtolower($form_state['values']['shift_direction']);
+    $phrase = $form_state['values']['shift_phrase'];
+    $letter_array = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
+    if($direction == 'left'){
+        $letter_array = array_reverse($letter_array);
+    }
+
+    $result = [];
+    $phrase_array = str_split($phrase);
+    foreach($phrase_array as $letter){
+        if(in_array($letter, $letter_array)){
+            $key = array_search($letter, $letter_array);
+            $letter = $letter_array[abs($key + $value) % 26];
+        }
+        array_push($result, $letter);
+    }
+
+    array_push($_SESSION['shift_cipher'], $phrase);
+    array_push($_SESSION['shift_cipher'], implode($result));
+    $form_state['redirect'] = 'shift_cipher_display';
+}
+
+function shift_cipher_display()
+{
+    return "<p>The shift cipher for " . $_SESSION['shift_cipher'][0] . " is: " . $_SESSION['shift_cipher'][1];
+}
